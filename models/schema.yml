@@ -1,7 +1,7 @@
 version: 2
 sources:
    - name: raw # allias de la table
-     schema: gz_raw_data #Nom exact du dataset dans BQ
+     schema: gwz_raw_data #Nom exact du dataset dans BQ
      description: greenwez raw data source
      tables:
          - name: sales # allias de la table
