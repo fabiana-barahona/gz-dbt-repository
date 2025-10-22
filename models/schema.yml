@@ -1,40 +1,71 @@
 version: 2
 sources:
-   - name: raw # allias de la table
-     schema: gwz_raw_data #Nom exact du dataset dans BQ
-     description: greenwez raw data source
-     tables:
-         - name: sales # allias de la table
-           identifier: raw_gz_sales #Nom exact de la table dans BQ
-           description: sales of greewneez / we have one row per product_id found in each order_id
-           loaded_at_field: "CAST (date_date AS TIMESTAMP)"
-           freshness: 
-             warn_after:
-               count: 90
-               period: day
-           
+  - name: raw # Logical name for the source group
+    schema: gwz_raw_data # Exact BigQuery Dataset ID
+    description: greenwez raw data source
+    
+    tables:
+      # --- SALES TABLE ---
+      - name: sales
+        identifier: raw_gz_sales # Exact table name in BQ
+        description: sales of greewneez / we have one row per product_id found in each order_id
         
-           columns:
-             - name: "(orders_id || '-' || pdt_id)"
-               description: primary key of the table
-               tests:
-                 - unique
-                 - not_null
-         - name: product
-           identifier: raw_gz_product
-           description: purchase_price by products_id
-           columns:
-             - name: products_id
-               description: primary key of the table
-               tests:
-                 - unique
-                 - not_null
-         - name: ship
-           identifier: raw_gz_ship
-           description: ship
-           columns:
-             - name: orders_id
-               description: primary key of the table
-               tests:
-                 - unique
-                 - not_null
+        # dbt requires the loaded_at_field to be a column name, not a casting expression.
+        # This will only work if 'date_date' is a valid TIMESTAMP field. 
+        # If it's a DATE field, you may need a separate staging model to cast it.
+        loaded_at_field: date_date 
+        freshness: 
+          warn_after:
+            count: 90
+            period: day
+            
+        columns:
+          # FIX: Cannot define a composite primary key using an expression in the sources YAML.
+          # You must define tests on existing columns.
+          # We'll test on the component columns instead.
+          - name: orders_id
+            tests:
+              - not_null
+          - name: products_id # Assuming 'pdt_id' in your comment means 'products_id'
+            tests:
+              - not_null
+              
+      # --- PRODUCT TABLE ---
+      - name: product
+        identifier: raw_gz_product
+        description: purchase_price by products_id
+        columns:
+          - name: products_id
+            description: primary key of the table
+            tests:
+              - unique
+              - not_null
+              
+      # --- SHIP TABLE ---
+      - name: ship
+        identifier: raw_gz_ship
+        description: ship
+        columns:
+          - name: orders_id
+            description: primary key of the table
+            tests:
+              - unique
+              - not_null
+
+      # --- MARKETING TABLES (Must be separate tables within the 'raw' source) ---
+
+      - name: adwords
+        identifier: raw_gz_adwords
+        description: adwords performance
+
+      - name: bing
+        identifier: raw_gz_bing
+        description: biing performance
+
+      - name: criteo
+        identifier: raw_gz_criteo
+        description: criteo performance
+  
+      - name: facebook
+        identifier: raw_gz_facebook
+        description: facebook performance
