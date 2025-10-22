@@ -10,9 +10,7 @@ sources:
         identifier: raw_gz_sales # Exact table name in BQ
         description: sales of greewneez / we have one row per product_id found in each order_id
         
-        # dbt requires the loaded_at_field to be a column name, not a casting expression.
-        # This will only work if 'date_date' is a valid TIMESTAMP field. 
-        # If it's a DATE field, you may need a separate staging model to cast it.
+        # ✅ FIX 1: Must be a literal column name for the freshness check.
         loaded_at_field: date_date 
         freshness: 
           warn_after:
@@ -20,13 +18,11 @@ sources:
             period: day
             
         columns:
-          # FIX: Cannot define a composite primary key using an expression in the sources YAML.
-          # You must define tests on existing columns.
-          # We'll test on the component columns instead.
+          # ✅ FIX 2: Cannot define a composite key using an expression in sources YAML. Testing on components is correct.
           - name: orders_id
             tests:
               - not_null
-          - name: products_id # Assuming 'pdt_id' in your comment means 'products_id'
+          - name: products_id
             tests:
               - not_null
               
@@ -52,11 +48,12 @@ sources:
               - unique
               - not_null
 
-      # --- MARKETING TABLES (Must be separate tables within the 'raw' source) ---
+      # --- MARKETING TABLES ---
 
       - name: adwords
         identifier: raw_gz_adwords
         description: adwords performance
+
 
       - name: bing
         identifier: raw_gz_bing
@@ -65,7 +62,15 @@ sources:
       - name: criteo
         identifier: raw_gz_criteo
         description: criteo performance
-  
       - name: facebook
         identifier: raw_gz_facebook
         description: facebook performance
+
+      - name: int_campaigns
+        identifier: int_campaigns
+        description: try of primary key 
+        columns:
+          - name: "(date_date || '-' || campaign_name||'-'|| campaign_key)"
+            tests:
+            - unique
+              - not_null
