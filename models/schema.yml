@@ -38,4 +38,15 @@ sources:
                tests:
                  - unique
                  - not_null
-              
+models: 
+   my_new_project: 
+     mart:
+       +materialized: table
+models: 
+   my_new_project: 
+     stagging:
+       +materialized: table
+models: 
+   my_new_project: 
+     Intermediate:
+       +materialized: table
